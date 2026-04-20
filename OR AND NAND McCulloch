@@ -1,0 +1,28 @@
+def mcculloch_pitts_neuron(inputs, weights, threshold):
+    net_input = sum(x * w for x, w in zip(inputs, weights))
+    
+    if net_input >= threshold:
+        return 1
+    else:
+        return 0
+
+def simulate_gate(gate_name, input_data, weights, threshold):
+    print(f"--- {gate_name} Gate Truth Table ---")
+    print("A | B | Output")
+    print("-" * 14)
+    
+    for inputs in input_data:
+        output = mcculloch_pitts_neuron(inputs, weights, threshold)
+        print(f"{inputs[0]} | {inputs[1]} |   {output}")
+    print("\n")
+
+if __name__ == "__main__":
+    inputs = [(0, 0), (0, 1), (1, 0), (1, 1)]
+
+    or_weights = (1, 1)
+    or_threshold = 1
+    simulate_gate("OR", inputs, or_weights, or_threshold)
+
+    nand_weights = (-1, -1)
+    nand_threshold = -1
+    simulate_gate("NAND", inputs, nand_weights, nand_threshold)
