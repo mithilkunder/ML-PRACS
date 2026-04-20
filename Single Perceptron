@@ -1,0 +1,40 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+X = np.array([[0,0],[0,1],[1,0],[1,1]])
+y = np.array([0,0,0,1])
+
+weights = np.zeros(X.shape[1])
+bias = 0
+lr = 0.1
+epochs = 10
+
+def step_function(x):
+    return 1 if x >= 0 else 0
+
+for epoch in range(epochs):
+    for i in range(len(X)):
+        linear_output = np.dot(X[i], weights) + bias
+        y_pred = step_function(linear_output)
+        error = y[i] - y_pred
+        weights += lr * error * X[i]
+        bias += lr * error
+
+print("Weights:", weights)
+print("Bias:", bias)
+
+predictions = []
+for i in range(len(X)):
+    pred = step_function(np.dot(X[i], weights) + bias)
+    predictions.append(pred)
+
+print("Predictions:", predictions)
+
+plt.scatter(X[:,0], X[:,1], c=y, cmap='bwr')
+x_vals = np.linspace(0,1,10)
+y_vals = -(weights[0]*x_vals + bias)/weights[1]
+plt.plot(x_vals, y_vals)
+plt.xlabel("X1")
+plt.ylabel("X2")
+plt.title("Single Layer Perceptron Decision Boundary")
+plt.show()
