@@ -1,0 +1,112 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.datasets import load_breast_cancer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+
+data = load_breast_cancer()
+df = pd.DataFrame(data.data, columns=data.feature_names)
+df['target'] = data.target
+
+print(df.head())
+print(df.info())
+print(df.describe())
+print(df.isnull().sum())
+
+sns.countplot(x='target', data=df)
+plt.title("Class Distribution")
+plt.show()
+
+plt.figure(figsize=(10,8))
+sns.heatmap(df.corr(), cmap='coolwarm')
+plt.title("Correlation Heatmap")
+plt.show()
+
+X = df.drop('target', axis=1).values
+y = df['target'].values.reshape(-1,1)
+
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+input_neurons = X_train.shape[1]
+hidden_neurons = 10
+output_neurons = 1
+
+np.random.seed(42)
+
+W1 = np.random.randn(input_neurons, hidden_neurons)
+b1 = np.zeros((1, hidden_neurons))
+
+W2 = np.random.randn(hidden_neurons, output_neurons)
+b2 = np.zeros((1, output_neurons))
+
+lr = 0.01
+epochs = 200
+losses = []
+
+for epoch in range(epochs):
+    Z1 = np.dot(X_train, W1) + b1
+    A1 = sigmoid(Z1)
+
+    Z2 = np.dot(A1, W2) + b2
+    A2 = sigmoid(Z2)
+
+    loss = -np.mean(y_train * np.log(A2 + 1e-8) +
+                    (1 - y_train) * np.log(1 - A2 + 1e-8))
+    losses.append(loss)
+
+    dZ2 = A2 - y_train
+    dW2 = np.dot(A1.T, dZ2)
+    db2 = np.sum(dZ2, axis=0, keepdims=True)
+
+    dA1 = np.dot(dZ2, W2.T)
+    dZ1 = dA1 * sigmoid_derivative(A1)
+    dW1 = np.dot(X_train.T, dZ1)
+    db1 = np.sum(dZ1, axis=0, keepdims=True)
+
+    W1 -= lr * dW1
+    b1 -= lr * db1
+    W2 -= lr * dW2
+    b2 -= lr * db2
+
+    if epoch % 50 == 0:
+        print("Epoch", epoch, "Loss:", loss)
+
+plt.plot(losses)
+plt.title("Loss Curve")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.show()
+
+def predict(X):
+    Z1 = np.dot(X, W1) + b1
+    A1 = sigmoid(Z1)
+    Z2 = np.dot(A1, W2) + b2
+    A2 = sigmoid(Z2)
+    return (A2 > 0.5).astype(int)
+
+y_pred = predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+sns.heatmap(confusion_matrix(y_test, y_pred), annot=True, fmt='d')
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+plt.show()
