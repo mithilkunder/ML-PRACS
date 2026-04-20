@@ -1,0 +1,23 @@
+def mcp_neuron(inputs, weights, threshold):
+    weighted_sum = sum(i * w for i, w in zip(inputs, weights))
+    return 1 if weighted_sum >= threshold else 0
+
+def and_gate(x1, x2):
+    return mcp_neuron([x1, x2], weights=[1, 1], threshold=2)
+
+def or_gate(x1, x2):
+    return mcp_neuron([x1, x2], weights=[1, 1], threshold=1)
+
+def print_truth_table(gate_name, gate_func):
+    print(f"\n{'='*30}")
+    print(f"  {gate_name} Gate — Truth Table")
+    print(f"{'='*30}")
+    print(f"  {'X1':<6} {'X2':<6} {'Output'}")
+    print(f"  {'-'*20}")
+    for x1 in [0, 1]:
+        for x2 in [0, 1]:
+            result = gate_func(x1, x2)
+            print(f"  {x1:<6} {x2:<6} {result}")
+
+print_truth_table("AND", and_gate)
+print_truth_table("OR",  or_gate)
