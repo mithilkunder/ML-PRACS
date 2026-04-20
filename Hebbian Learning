@@ -1,0 +1,103 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+df = pd.read_csv('diabetes.csv')
+
+print(df.head())
+print(df.info())
+print(df.describe())
+
+plt.figure(figsize=(6,4))
+sns.countplot(x='Outcome', data=df)
+plt.title('Class Distribution')
+plt.xlabel('Outcome')
+plt.ylabel('Count')
+plt.show()
+
+plt.figure(figsize=(10,6))
+sns.heatmap(df.corr(), annot=True)
+plt.title('Correlation Matrix')
+plt.show()
+
+columns = ['Glucose','BloodPressure','SkinThickness','Insulin','BMI']
+for col in columns:
+    df[col] = df[col].replace(0, df[col].median())
+
+for col in df.columns[:-1]:
+    Q1 = df[col].quantile(0.25)
+    Q3 = df[col].quantile(0.75)
+    IQR = Q3 - Q1
+    lower = Q1 - 1.5 * IQR
+    upper = Q3 + 1.5 * IQR
+    df = df[(df[col] >= lower) & (df[col] <= upper)]
+
+X = df.drop('Outcome', axis=1).values
+y = df['Outcome'].values
+
+y = np.where(y == 0, -1, 1)
+
+scaler = StandardScaler()
+X = scaler.fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+n_features = X_train.shape[1]
+weights = np.zeros(n_features)
+bias = 0
+
+learning_rate = 0.01
+
+for epoch in range(100):
+    for i in range(len(X_train)):
+        xi = X_train[i]
+        target = y_train[i]
+        weights = weights + learning_rate * xi * target
+        bias = bias + learning_rate * target
+
+def predict(X):
+    linear_output = np.dot(X, weights) + bias
+    return np.where(linear_output >= 0, 1, -1)
+
+y_pred = predict(X_test)
+
+print("Accuracy:", accuracy_score(y_test, y_pred))
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("Classification Report:\n", classification_report(y_test, y_pred))
+
+plt.figure(figsize=(6,4))
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, fmt='d')
+plt.title('Confusion Matrix')
+plt.xlabel('Predicted Label')
+plt.ylabel('True Label')
+plt.show()
+
+plt.figure(figsize=(8,5))
+plt.scatter(range(len(y_test)), y_test + np.random.uniform(-0.1,0.1,len(y_test)), label='Actual')
+plt.scatter(range(len(y_pred)), y_pred + np.random.uniform(-0.1,0.1,len(y_pred)), marker='x', label='Predicted')
+plt.legend()
+plt.title('Actual vs Predicted (Improved Visualization)')
+plt.xlabel('Sample Index')
+plt.ylabel('Class Label (-1, 1)')
+plt.show()
+
+correct = np.sum(y_test == y_pred)
+incorrect = np.sum(y_test != y_pred)
+
+plt.figure(figsize=(6,4))
+plt.bar(['Correct Predictions','Incorrect Predictions'], [correct, incorrect])
+plt.title('Model Performance')
+plt.xlabel('Prediction Type')
+plt.ylabel('Count')
+plt.show()
+
+new_input = np.array([[2,120,70,20,80,30,0.5,25]])
+new_input = scaler.transform(new_input)
+prediction = predict(new_input)
+
+print("New Input Prediction:", prediction)
